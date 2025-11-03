@@ -1,13 +1,12 @@
 import streamlit as st
-from dotenv import load_dotenv
-from utils.model import chat_with_llm, get_session_history
-from utils.document_loader import convert_document
+from utils.assistant import Assistant
 import uuid
 from datetime import datetime
 
-load_dotenv(".env")
+st.set_page_config(page_title="Private Assistant", page_icon="💬", layout="wide")
 
-st.set_page_config(page_title="Private Chatbot", page_icon="💬", layout="wide")
+if "assistant" not in st.session_state:
+    st.session_state.assistant = Assistant()
 
 if "sessions" not in st.session_state:
     st.session_state.sessions = {}
@@ -16,8 +15,7 @@ if "current_session_id" not in st.session_state:
     st.session_state.current_session_id = session_id
     st.session_state.sessions[session_id] = {
         "title": "New Chat",
-        "messages": [],
-        "context": ""
+        "messages": []
     }
 
 with st.sidebar:
@@ -30,8 +28,7 @@ with st.sidebar:
         st.session_state.current_session_id = session_id
         st.session_state.sessions[session_id] = {
             "title": "New Chat",
-            "messages": [],
-            "context": ""
+            "messages": []
         }
         st.rerun()
     
@@ -83,7 +80,7 @@ col1, col2 = st.columns([1, 20])
 
 with col1:
     # Button to trigger file upload - positioned above chat input
-    if st.button("➕", help="Add photos & files", key="add_file_btn"):
+    if st.button("➕", help="Add files", key="add_file_btn"):
         st.session_state.show_uploader = not st.session_state.get("show_uploader", False)
 
 # Show file uploader if button is clicked
@@ -96,9 +93,9 @@ if st.session_state.get("show_uploader", False):
     )
     
     if uploaded_file:
-        with st.spinner("Processing file..."):
-            st.session_state.sessions[st.session_state.current_session_id]["context"] = convert_document(uploaded_file)
-        st.success(f"✓ {uploaded_file.name}")
+        with st.spinner("Processing and vectorizing file..."):
+            st.session_state.assistant.vectorize_document(uploaded_file)
+        st.success(f"✓ {uploaded_file.name} - Document vectorized and stored!")
         st.session_state.show_uploader = False
 
 # Chat input - always at the bottom
@@ -117,10 +114,12 @@ if question:
         st.markdown(question)
     
     with st.chat_message("assistant"):
-        context = current_session.get("context", "")
-        response = st.write_stream(chat_with_llm(st.session_state.current_session_id, context, question))
+        with st.spinner("Thinking..."):
+            response = st.write_stream(st.session_state.assistant.chat(st.session_state.current_session_id, question))
     
     current_session["messages"].append({
         "role": "assistant",
         "content": response
     })
+    
+    st.rerun()
