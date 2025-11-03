@@ -2,6 +2,7 @@ import streamlit as st
 from utils.assistant import Assistant
 import uuid
 from datetime import datetime
+import os
 
 st.set_page_config(page_title="Private Assistant", page_icon="💬", layout="wide")
 
@@ -23,14 +24,27 @@ with st.sidebar:
     st.markdown("### Chats")
     
     # New chat button
-    if st.button("+ New Chat", use_container_width=True, type="primary"):
-        session_id = str(uuid.uuid4())
-        st.session_state.current_session_id = session_id
-        st.session_state.sessions[session_id] = {
-            "title": "New Chat",
-            "messages": []
-        }
-        st.rerun()
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("New Chat", use_container_width=True, type="primary", key="new_chat_btn"):
+            session_id = str(uuid.uuid4())
+            st.session_state.current_session_id = session_id
+            st.session_state.sessions[session_id] = {
+                "title": "New Chat",
+                "messages": []
+            }
+            st.rerun()
+    
+    with col2:
+        if st.button("Clear Cache", use_container_width=True, type="secondary", help="Clear vector store", key="clear_cache_btn"):
+            import shutil
+            vector_db_path = st.session_state.assistant.vector_db_path
+            if os.path.exists(vector_db_path):
+                shutil.rmtree(vector_db_path)
+                st.success("Vector store cache cleared!")
+                st.rerun()
+            else:
+                st.info("No cache to clear")
     
     st.markdown("---")
     
@@ -53,8 +67,8 @@ with st.sidebar:
                 st.rerun()
         
         with col2:
-            # Delete button - only show on hover (simulated with smaller button)
-            if st.button("×", key=f"delete_{session_id}", help="Delete"):
+            # Delete button
+            if st.button("✕", key=f"delete_{session_id}", help="Delete chat"):
                 if len(st.session_state.sessions) > 1:
                     del st.session_state.sessions[session_id]
                     if st.session_state.current_session_id == session_id:
@@ -66,7 +80,7 @@ with st.sidebar:
     st.caption("Made by [mausneg](https://github.com/mausneg)")
 
 # Main chat area
-st.title("Private Chatbot")
+st.title("Private Assistant")
 
 current_session = st.session_state.sessions[st.session_state.current_session_id]
 
@@ -79,9 +93,10 @@ for message in current_session["messages"]:
 col1, col2 = st.columns([1, 20])
 
 with col1:
-    # Button to trigger file upload - positioned above chat input
-    if st.button("➕", help="Add files", key="add_file_btn"):
+    # Button to trigger file upload
+    if st.button("📎", key="add_file_btn", help="Attach files"):
         st.session_state.show_uploader = not st.session_state.get("show_uploader", False)
+        st.rerun()
 
 # Show file uploader if button is clicked
 if st.session_state.get("show_uploader", False):
@@ -93,9 +108,9 @@ if st.session_state.get("show_uploader", False):
     )
     
     if uploaded_file:
-        with st.spinner("Processing and vectorizing file..."):
+        with st.spinner("Uploading file..."):
             st.session_state.assistant.vectorize_document(uploaded_file)
-        st.success(f"✓ {uploaded_file.name} - Document vectorized and stored!")
+        st.success(f"Document has been uploaded: {uploaded_file.name}")
         st.session_state.show_uploader = False
 
 # Chat input - always at the bottom

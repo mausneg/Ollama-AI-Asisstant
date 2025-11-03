@@ -100,7 +100,7 @@ class Assistant:
             )
             retriever = vector_store.as_retriever(
                 search_type='similarity',
-                search_kwargs={'k': 5, 'fetch_k': 10}
+                search_kwargs={'k': 10, 'fetch_k': 30}
             )
             return retriever
         return None
