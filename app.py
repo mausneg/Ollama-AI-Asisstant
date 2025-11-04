@@ -110,8 +110,16 @@ if st.session_state.get("show_uploader", False):
     if uploaded_file:
         with st.spinner("Uploading file..."):
             st.session_state.assistant.vectorize_document(uploaded_file)
+        
+        # Add upload message to chat history
+        current_session["messages"].append({
+            "role": "user",
+            "content": f"Document uploaded: {uploaded_file.name}"
+        })
+        
         st.success(f"Document has been uploaded: {uploaded_file.name}")
         st.session_state.show_uploader = False
+        st.rerun()
 
 # Chat input - always at the bottom
 question = st.chat_input("Ask anything...")

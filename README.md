@@ -17,6 +17,26 @@
 
 Ollama AI Assistant is a sophisticated conversational AI application that combines Retrieval Augmented Generation (RAG) with local language models powered by Ollama. It features a ChatGPT-like interface, document vectorization, and persistent chat history management.
 
+### Interface Preview
+
+<p align="center">
+  <img src="assets/images/tampilan_awal.png" alt="Initial Interface" width="800"/>
+  <br/>
+  <em>Clean ChatGPT-inspired interface with sidebar session management</em>
+</p>
+
+<p align="center">
+  <img src="assets/images/saat_upload_file.png" alt="File Upload" width="800"/>
+  <br/>
+  <em>Document upload and vectorization process</em>
+</p>
+
+<p align="center">
+  <img src="assets/images/sample_qa.png" alt="Sample Q&A" width="800"/>
+  <br/>
+  <em>Sample conversation with RAG-powered responses</em>
+</p>
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -60,6 +80,23 @@ Ollama AI Assistant is a sophisticated conversational AI application that combin
 | **Clean UI** | Modern, minimalist interface inspired by ChatGPT |
 
 ## Architecture
+
+### RAG Concept
+
+### Vector Store Concept
+
+<p align="center">
+  <img src="assets/images/konsep_vecktor_store.png" alt="Vector Store Concept" width="700"/>
+  <br/>
+  <em>Document embedding and similarity search process</em>
+</p>
+
+<p align="center">
+  <img src="assets/images/konsep_rag.png" alt="RAG Concept" width="700"/>
+  <br/>
+  <em>Retrieval Augmented Generation workflow</em>
+</p>
+
 
 ### System Components
 
@@ -463,6 +500,8 @@ We welcome contributions! Here's how you can help:
 - ⬜ Tool calling
 - ⬜ Agents
 - ⬜ Database utilities
+- ⬜ Local deployment with Docker, Nginx and FastAPI
+- ⬜ Deployment using AWS platforms (ECS, Lambda, S3)
 
 ## License
 
