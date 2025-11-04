@@ -81,7 +81,6 @@ Ollama AI Assistant is a sophisticated conversational AI application that combin
 
 ## Architecture
 
-### RAG Concept
 
 ### Vector Store Concept
 
@@ -90,6 +89,8 @@ Ollama AI Assistant is a sophisticated conversational AI application that combin
   <br/>
   <em>Document embedding and similarity search process</em>
 </p>
+
+### RAG Concept
 
 <p align="center">
   <img src="assets/images/konsep_rag.png" alt="RAG Concept" width="700"/>
