@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.assistant import Assistant
+from utils.vectorize import vectorize_document
 import uuid
 from datetime import datetime
 import os
@@ -38,9 +39,9 @@ with st.sidebar:
     with col2:
         if st.button("Clear Cache", use_container_width=True, type="secondary", help="Clear vector store", key="clear_cache_btn"):
             import shutil
-            vector_db_path = st.session_state.assistant.vector_db_path
-            if os.path.exists(vector_db_path):
-                shutil.rmtree(vector_db_path)
+            db_name = "vector_db"
+            if os.path.exists(db_name):
+                shutil.rmtree(db_name)
                 st.success("Vector store cache cleared!")
                 st.rerun()
             else:
@@ -109,7 +110,7 @@ if st.session_state.get("show_uploader", False):
     
     if uploaded_file:
         with st.spinner("Uploading file..."):
-            st.session_state.assistant.vectorize_document(uploaded_file)
+            vectorize_document(uploaded_file)
         
         # Add upload message to chat history
         current_session["messages"].append({
