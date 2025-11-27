@@ -8,7 +8,7 @@ import os
 st.set_page_config(page_title="Private Assistant", page_icon="💬", layout="wide")
 
 if "assistant" not in st.session_state:
-    st.session_state.assistant = Assistant()
+    st.session_state.assistant = Assistant(llm_model="qwen3")
 
 if "sessions" not in st.session_state:
     st.session_state.sessions = {}

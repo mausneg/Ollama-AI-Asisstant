@@ -2,6 +2,8 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langchain_community.chat_message_histories import SQLChatMessageHistory
 from langchain_core.messages import AIMessage
+import re
+
 from .tools import tools
 
 class Assistant:
@@ -39,7 +41,10 @@ class Assistant:
             system_prompt=system_prompt
         )
 
-
+    def _post_process(self, msg):
+        cleaned_content = re.sub(r'<think>.*?</think>', '', msg.content, flags=re.DOTALL)
+        cleaned_content = cleaned_content.strip()
+        return cleaned_content
         
     def chat(self, session_id, question):
         for event in self.agent.stream({"messages": [{"role":"human", "content":question}]}, stream_mode="values"):
@@ -48,4 +53,6 @@ class Assistant:
             if isinstance(msg, AIMessage) and msg.content:
                 if hasattr(msg, 'tool_calls') and msg.tool_calls:
                     continue 
-                yield msg.content
+                cleaned_content = self._post_process(msg)
+                if cleaned_content:
+                    yield cleaned_content
