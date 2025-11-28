@@ -1,13 +1,91 @@
 import os
 from langchain_community.vectorstores import FAISS
 from langchain_ollama import OllamaEmbeddings
-from langchain.tools import tool
+from langchain.tools import tool, ToolRuntime
+from langgraph.store.memory import InMemoryStore
 from ddgs import DDGS
-
+from dataclasses import dataclass
+from typing_extensions import TypedDict
 
 db_name = "vector_db"
 db_abs_path = os.path.abspath(db_name)
 embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://localhost:11434")
+
+store = InMemoryStore()
+
+@dataclass
+class Context:
+    user_id: str
+
+@tool
+def get_histories(runtime: ToolRuntime[Context]):
+    """
+    Retrieve conversation history from memory store.
+    Use this tool at the START of conversation to check past context and user preferences.
+    
+    **IMPORTANT:** Always call this tool first when user asks:
+    - Questions about their previous messages
+    - "Do you remember...?"
+    - "What did I say about...?"
+    - Or when you need context from past conversations
+    
+    Returns:
+        String containing past conversation messages (last 10 messages)
+    """
+    user_store = runtime.store
+    user_id = runtime.context.user_id
+    
+    try:
+        store_data = user_store.get(("conversations",), user_id)
+        if store_data:
+            messages = store_data.value.get("messages", [])
+            if messages:
+                formatted = []
+                for i, msg in enumerate(messages, 1):
+                    role = msg.get("role", "unknown")
+                    content = msg.get("content", "")
+                    formatted.append(f"{i}. {role}: {content}")
+                return "Past conversation:\n" + "\n".join(formatted)
+        return "No conversation history found."
+    except Exception as e:
+        return f"Error retrieving history: {e}"   
+        
+@tool
+def save_context(message: str, role: str, runtime: ToolRuntime[Context]) -> str:
+    """
+    Save conversation messages to memory store.
+    This tool automatically saves important context from conversations.
+    
+    Use this ONLY when:
+    - User shares important information (name, preferences, facts)
+    - You want to remember specific context for future reference
+    
+    DO NOT use for every single message - only important ones.
+    
+    Args:
+        message: The message content to save
+        role: Either "human" or "assistant"
+        runtime: Tool runtime context with store and user_id
+    
+    Returns:
+        Success message confirming conversation was saved
+    """
+    user_store = runtime.store
+    user_id = runtime.context.user_id
+    
+    try:
+        existing = user_store.get(("conversations",), user_id)
+        messages = existing.value.get("messages", []) if existing else []
+    except:
+        messages = []
+    
+    # Append new message
+    messages.append({"role": role, "content": message})
+    
+    # Save back
+    user_store.put(("conversations",), user_id, {"messages": messages})
+    
+    return f"Successfully saved {role} message to conversation history."
 
 @tool
 def web_search(query: str, num_results: int=10) -> str:
@@ -72,15 +150,9 @@ def retrieve_context(query: str, k: int=5)-> str:
     context = "\n\n".join(f"{i+1}. Source: {doc.metadata.get('source', '-')} (Page: {doc.metadata.get('page', '-')})\n {doc.page_content}" for i, doc in enumerate (docs))
     return context
 
-def do_nothing(query: str) -> str:
-    """
-    This tool does nothing and is used to handle cases where no tool is needed.
-    It is a placeholder to ensure the agent can respond without using tools.
-    """
-    return "No action taken. You can ask me anything else or use a tool if needed."
-
 tools = [
+    get_histories,
     retrieve_context,
     web_search,
-    do_nothing,
+    save_context
 ]
